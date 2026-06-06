@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facebook Page Manager - Dashboard</title>
+  <style>
+    :root {
+      --primary: #1877f2;
+      --primary-dark: #166fe5;
+      --bg: #f0f2f5;
+      --card: #ffffff;
+      --text: #1c1e21;
+      --text-muted: #65676b;
+      --border: #dadde1;
+      --success: #31a24c;
+      --danger: #e4e6eb;
+      --danger-text: #f4212e;
+      --shadow: 0 2px 8px rgba(0,0,0,.1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* === LOGIN === */
+    #login-view { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-card {
+      background: var(--card);
+      padding: 48px 40px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      width: 380px;
+      text-align: center;
+    }
+    .login-card h1 { font-size: 28px; margin-bottom: 8px; color: var(--primary); }
+    .login-card p { color: var(--text-muted); margin-bottom: 32px; font-size: 14px; }
+    .login-card input {
+      width: 100%; padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      margin-bottom: 12px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .login-card input:focus { border-color: var(--primary); }
+    .login-card button {
+      width: 100%; padding: 14px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .login-card button:hover { background: var(--primary-dark); }
+    .login-card button:disabled { background: #9bc0f7; cursor: not-allowed; }
+    .login-error {
+      background: #fff3f3;
+      color: var(--danger-text);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      display: none;
+    }
+
+    /* === APP === */
+    #app-view { display: none; }
+
+    /* Topbar */
+    .topbar {
+      background: var(--card);
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 24px; }
+    .topbar-logo { font-size: 22px; font-weight: 700; color: var(--primary); }
+    .topbar-tabs { display: flex; gap: 4px; }
+    .topbar-tab {
+      padding: 8px 16px;
+      border: none;
+      background: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .topbar-tab.active {
+      background: var(--bg);
+      color: var(--primary);
+    }
+    .topbar-tab:hover:not(.active) { background: #e8eaf0; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .user-info { font-size: 14px; color: var(--text-muted); }
+    .btn-logout {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text);
+      transition: all .2s;
+    }
+    .btn-logout:hover { background: var(--danger); }
+
+    /* Main */
+    .main { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
+
+    /* Section title */
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+
+    /* Create Post */
+    .create-post-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+    .create-post-card h3 { font-size: 16px; margin-bottom: 16px; color: var(--text); }
+    .create-post-card textarea {
+      width: 100%; min-height: 100px; padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .create-post-card textarea:focus { border-color: var(--primary); }
+    .create-post-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 12px;
+    }
+    .btn-create {
+      padding: 10px 24px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-create:hover { background: var(--primary-dark); }
+    .btn-create:disabled { background: #9bc0f7; cursor: not-allowed; }
+
+    /* Filter bar */
+    .filter-bar {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .filter-bar label { font-size: 13px; color: var(--text-muted); }
+    .filter-bar input[type="number"],
+    .filter-bar input[type="date"] {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+    }
+    .filter-bar button {
+      padding: 6px 14px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .filter-bar button:hover { background: var(--primary-dark); }
+
+    /* Posts list */
+    .posts-list { display: flex; flex-direction: column; gap: 16px; }
+
+    .post-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      transition: box-shadow .2s;
+    }
+    .post-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.14); }
+    .post-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .post-message { font-size: 15px; line-height: 1.5; color: var(--text); white-space: pre-wrap; }
+    .post-meta {
+      display: flex; gap: 16px; margin-top: 12px;
+      font-size: 12px; color: var(--text-muted);
+    }
+    .post-meta span { display: flex; align-items: center; gap: 4px; }
+    .post-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .btn-comment {
+      padding: 6px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text);
+      transition: all .2s;
+    }
+    .btn-comment:hover { background: #d8dadf; }
+    .btn-comment.loading { opacity: .6; cursor: wait; }
+
+    /* Comments */
+    .comments-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      display: none;
+    }
+    .comments-section.open { display: block; }
+    .comments-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .comment-item {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .comment-item:last-child { border-bottom: none; }
+    .comment-author { font-size: 13px; font-weight: 600; color: var(--primary); }
+    .comment-text { font-size: 14px; margin-top: 4px; color: var(--text); white-space: pre-wrap; }
+    .comment-time { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .no-comments { font-size: 13px; color: var(--text-muted); padding: 8px 0; font-style: italic; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 20px rgba(0,0,0,.15);
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all .3s;
+      max-width: 340px;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: #d4edda; color: #155724; }
+    .toast.error { background: #f8d7da; color: #721c24; }
+
+    /* Loading */
+    .loading-spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<!-- ========== LOGIN VIEW ========== -->
+<div id="login-view">
+  <div class="login-card">
+    <h1>Facebook Manager</h1>
+    <p>Đăng nhập để quản lý Page</p>
+    <div class="login-error" id="login-error"></div>
+    <form id="login-form">
+      <input type="text" id="username" placeholder="Username" autocomplete="username" required>
+      <input type="password" id="password" placeholder="Password" autocomplete="current-password" required>
+      <button type="submit" id="login-btn">Đăng nhập</button>
+    </form>
+  </div>
+</div>
+
+<!-- ========== APP VIEW ========== -->
+<div id="app-view">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-logo">FB Manager</span>
+      <div class="topbar-tabs">
+        <button class="topbar-tab active" data-tab="posts">Bài viết</button>
+        <button class="topbar-tab" data-tab="about">Giới thiệu</button>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="user-info" id="user-display"></span>
+      <button class="btn-logout" id="logout-btn">Đăng xuất</button>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <div class="main">
+
+    <!-- === POSTS TAB === -->
+    <div id="tab-posts">
+
+      <!-- Create post -->
+      <div class="create-post-card">
+        <h3>Tạo bài viết mới</h3>
+        <textarea id="post-message" placeholder="Viết nội dung bài viết..."></textarea>
+        <div class="create-post-footer">
+          <span style="font-size:12px;color:var(--text-muted);" id="char-count">0 / 63206</span>
+          <button class="btn-create" id="btn-create-post">Đăng bài</button>
+        </div>
+      </div>
+
+      <!-- Filter -->
+      <div class="filter-bar">
+        <label>Số bài:</label>
+        <input type="number" id="filter-limit" value="10" min="1" max="100">
+        <label>Từ ngày:</label>
+        <input type="date" id="filter-since">
+        <label>Đến ngày:</label>
+        <input type="date" id="filter-until">
+        <button onclick="loadPosts()">Lọc</button>
+        <button onclick="clearFilters()" style="background:#6c757d;">Xóa lọc</button>
+      </div>
+
+      <!-- Posts -->
+      <h2 class="section-title">Danh sách bài viết</h2>
+      <div class="posts-list" id="posts-list">
+        <div class="empty-state" id="posts-empty">
+          <div class="icon">📋</div>
+          <p>Đang tải bài viết...</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- === ABOUT TAB === -->
+    <div id="tab-about" style="display:none;">
+      <div class="create-post-card">
+        <h3>Giới thiệu ứng dụng</h3>
+        <div style="font-size:14px;line-height:1.8;color:var(--text-muted);">
+          <p><strong>Facebook Page Manager</strong> - Dashboard quản lý bài viết và bình luận Facebook Page.</p>
+          <br>
+          <p><strong>Tính năng:</strong></p>
+          <ul style="margin-left:20px;margin-top:8px;">
+            <li>Đăng nhập bảo mật với JWT</li>
+            <li>Xem danh sách bài viết từ Facebook Page</li>
+            <li>Tạo bài viết mới trên Page</li>
+            <li>Xem bình luận từng bài viết</li>
+            <li>Lọc bài viết theo ngày và số lượng</li>
+          </ul>
+          <br>
+          <p><strong>Phiên bản API:</strong> v18.0</p>
+          <p><strong>Server:</strong> http://localhost:3000</p>
+          <p><strong>Tài khoản:</strong> admin / admin123</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ==================== STATE ====================
+  const API_BASE = 'http://localhost:3000/api';
+  let token = localStorage.getItem('fb_token');
+  let username = localStorage.getItem('fb_user');
+
+  // ==================== INIT ====================
+  document.addEventListener('DOMContentLoaded', () => {
+    if (token) {
+      showApp();
+      loadPosts();
+    }
+
+    // Login form
+    document.getElementById('login-form').addEventListener('submit', handleLogin);
+
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      localStorage.removeItem('fb_token');
+      localStorage.removeItem('fb_user');
+      location.reload();
+    });
+
+    // Tabs
+    document.querySelectorAll('.topbar-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.topbar-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const tabName = tab.dataset.tab;
+        document.getElementById('tab-posts').style.display = tabName === 'posts' ? 'block' : 'none';
+        document.getElementById('tab-about').style.display = tabName === 'about' ? 'block' : 'none';
+      });
+    });
+
+    // Char counter
+    const msg = document.getElementById('post-message');
+    msg.addEventListener('input', () => {
+      document.getElementById('char-count').textContent = `${msg.value.length} / 63206`;
+    });
+
+    // Create post
+    document.getElementById('btn-create-post').addEventListener('click', createPost);
+  });
+
+  // ==================== LOGIN ====================
+  async function handleLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    const errEl = document.getElementById('login-error');
+    const user = document.getElementById('username').value.trim();
+    const pass = document.getElementById('password').value.trim();
+
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span>';
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, password: pass }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error?.message || 'Đăng nhập thất bại');
+      }
+
+      token = data.data.token;
+      username = data.data.username;
+      localStorage.setItem('fb_token', token);
+      localStorage.setItem('fb_user', username);
+
+      showApp();
+      loadPosts();
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Đăng nhập';
+    }
+  }
+
+  function showApp() {
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('app-view').style.display = 'block';
+    document.getElementById('user-display').textContent = username;
+  }
+
+  // ==================== API HELPERS ====================
+  async function apiFetch(url, options = {}) {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...options.headers,
+      },
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error?.message || `Lỗi HTTP ${res.status}`);
+    }
+    return data;
+  }
+
+  // ==================== POSTS ====================
+  async function loadPosts() {
+    const limit = document.getElementById('filter-limit').value || 10;
+    const since = document.getElementById('filter-since').value;
+    const until = document.getElementById('filter-until').value;
+
+    const params = new URLSearchParams();
+    params.set('limit', limit);
+    if (since) params.set('since', since);
+    if (until) params.set('until', until);
+
+    const list = document.getElementById('posts-list');
+    const empty = document.getElementById('posts-empty');
+    empty.innerHTML = '<div class="icon">⏳</div><p>Đang tải...</p>';
+    empty.style.display = 'block';
+
+    try {
+      const data = await apiFetch(`${API_BASE}/posts?${params}`);
+      renderPosts(data.data);
+    } catch (err) {
+      empty.innerHTML = `<div class="icon">⚠️</div><p>Lỗi: ${err.message}</p>`;
+      empty.style.display = 'block';
+    }
+  }
+
+  function renderPosts(posts) {
+    const list = document.getElementById('posts-list');
+    if (!posts || posts.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">📭</div>
+          <p>Không có bài viết nào</p>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = posts.map(post => `
+      <div class="post-card">
+        <div class="post-header">
+          <div class="post-message">${escapeHtml(post.message || '(Không có nội dung)')}</div>
+        </div>
+        <div class="post-meta">
+          ${post.created_time ? `<span>📅 ${formatDate(post.created_time)}</span>` : ''}
+          ${post.id ? `<span>🆔 ${post.id}</span>` : ''}
+        </div>
+        <div class="post-actions">
+          <button class="btn-comment" onclick="toggleComments(this, '${post.id}')">💬 Xem bình luận</button>
+        </div>
+        <div class="comments-section" id="comments-${post.id}"></div>
+      </div>
+    `).join('');
+  }
+
+  async function toggleComments(btn, postId) {
+    const section = document.getElementById(`comments-${postId}`);
+
+    if (section.classList.contains('open')) {
+      section.classList.remove('open');
+      return;
+    }
+
+    // Close all others
+    document.querySelectorAll('.comments-section.open').forEach(el => {
+      if (el !== section) {
+        el.classList.remove('open');
+        el.innerHTML = '';
+      }
+    });
+
+    section.classList.add('open');
+    section.innerHTML = '<p style="font-size:13px;color:var(--text-muted);">Đang tải bình luận...</p>';
+    btn.classList.add('loading');
+
+    try {
+      const data = await apiFetch(`${API_BASE}/comments/${postId}?limit=20`);
+      renderComments(section, data.data);
+    } catch (err) {
+      section.innerHTML = `<p style="color:var(--danger-text);font-size:13px;">Lỗi: ${err.message}</p>`;
+    } finally {
+      btn.classList.remove('loading');
+    }
+  }
+
+  function renderComments(container, comments) {
+    if (!comments || comments.length === 0) {
+      container.innerHTML = '<p class="no-comments">Không có bình luận nào</p>';
+      return;
+    }
+    container.innerHTML = `
+      <div class="comments-title">Bình luận (${comments.length})</div>
+      ${comments.map(c => `
+        <div class="comment-item">
+          <div class="comment-author">${escapeHtml(c.from?.name || 'Người dùng')}</div>
+          <div class="comment-text">${escapeHtml(c.message || '')}</div>
+          ${c.created_time ? `<div class="comment-time">${formatDate(c.created_time)}</div>` : ''}
+        </div>
+      `).join('')}
+    `;
+  }
+
+  // ==================== CREATE POST ====================
+  async function createPost() {
+    const msg = document.getElementById('post-message').value.trim();
+    const btn = document.getElementById('btn-create-post');
+
+    if (!msg) {
+      showToast('Vui lòng nhập nội dung bài viết', 'error');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span>';
+
+    try {
+      await apiFetch(`${API_BASE}/posts`, {
+        method: 'POST',
+        body: JSON.stringify({ message: msg }),
+      });
+      document.getElementById('post-message').value = '';
+      document.getElementById('char-count').textContent = '0 / 63206';
+      showToast('Đăng bài thành công!', 'success');
+      loadPosts();
+    } catch (err) {
+      showToast('Lỗi: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Đăng bài';
+    }
+  }
+
+  // ==================== UTILS ====================
+  function clearFilters() {
+    document.getElementById('filter-limit').value = 10;
+    document.getElementById('filter-since').value = '';
+    document.getElementById('filter-until').value = '';
+    loadPosts();
+  }
+
+  function showToast(msg, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = `toast ${type} show`;
+    setTimeout(() => { toast.classList.remove('show'); }, 3000);
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function formatDate(iso) {
+    try {
+      return new Date(iso).toLocaleString('vi-VN', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    } catch {
+      return iso;
+    }
+  }
+</script>
+</body>
+</html>

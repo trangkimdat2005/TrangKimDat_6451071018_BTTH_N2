@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: fb_api-postgres
+    environment:
+      POSTGRES_DB: fb_api_db
+      POSTGRES_USER: fb_api_user
+      POSTGRES_PASSWORD: fb_api_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fb_api_user -d fb_api_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

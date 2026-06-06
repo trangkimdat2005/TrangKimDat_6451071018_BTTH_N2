@@ -1,0 +1,81 @@
+groups:
+  - name: kafka_alerts
+    interval: 30s
+    rules:
+      - alert: DeadLetterQueueNotEmpty
+        expr: kafka_topic_partition_current_offset{topic=~"facebook-dead-letter"} > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Dead Letter Queue has messages"
+          description: "Topic `facebook-dead-letter` has {{ $value }} messages that failed all retries."
+
+      - alert: KafkaConsumerLag
+        expr: kafka_consumer_lag > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka consumer lag is high"
+          description: "Consumer group `{{ $labels.consumergroup}}` on topic `{{ $labels.topic}}` has lag of {{ $value }}."
+
+      - alert: KafkaUnderReplicatedPartitions
+        expr: kafka_cluster_partition_under_replicated > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka under-replicated partitions"
+          description: "{{ $value }} partitions are under-replicated in Kafka cluster."
+
+  - name: service_alerts
+    interval: 30s
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }} service is down"
+          description: "{{ $labels.job }} has been down for more than 1 minute."
+
+      - alert: HighErrorRate
+        expr: rate(events_failed_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "{{ $labels.service }} is failing at a high rate ({{ $value | printf \"%.2f\" }}/s)."
+
+      - alert: CircuitBreakerOpen
+        expr: circuit_breaker_state == 2
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Circuit breaker is open"
+          description: "Circuit breaker for {{ $labels.service }} has been open for more than 30 seconds."
+
+      - alert: HighRetryRate
+        expr: rate(retry_attempts_total[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High retry rate"
+          description: "{{ $labels.service }} is retrying frequently ({{ $value | printf \"%.2f\" }}/s)."
+
+  - name: rate_limit_alerts
+    interval: 30s
+    rules:
+      - alert: RateLimitTriggered
+        expr: rate_limit_triggered_total > 0
+        for: 1m
+        labels:
+          severity: info
+        annotations:
+          summary: "Rate limit triggered"
+          description: "Rate limiting activated for sender {{ $labels.sender_id }}."
