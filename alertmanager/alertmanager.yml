@@ -1,0 +1,61 @@
+global:
+  resolve_timeout: 1m
+
+route:
+  group_by: ['alertname', 'severity']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'slack-notifications'
+  routes:
+    - match:
+        severity: critical
+      receiver: 'slack-notifications'
+      continue: true
+    - match:
+        severity: warning
+      receiver: 'slack-notifications'
+    - match:
+        alertname: DeadLetterQueueNotEmpty
+      receiver: 'slack-critical'
+      continue: true
+
+receivers:
+  - name: 'slack-notifications'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#alerts'
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: '{{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          {{ if .Labels.service }}Service: `{{ .Labels.service }}`{{ end }}
+          {{ end }}
+        footer: 'Alertmanager'
+        icon_emoji: ':warning:'
+
+  - name: 'slack-critical'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#alerts-critical'
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: 'CRITICAL: {{ .GroupLabels.alertname }}'
+        text: |
+          :rotating_light: *CRITICAL ALERT*
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          {{ end }}
+        footer: 'Alertmanager - Critical'
+        icon_emoji: ':rotating_light:'
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname']
